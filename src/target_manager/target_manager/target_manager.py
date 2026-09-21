@@ -2,8 +2,23 @@ import rclpy
 from rclpy.node import Node
 
 from geometry_msgs.msg import PoseArray, Pose
-
 from visualization_msgs.msg import Marker, MarkerArray
+
+import random
+import math
+
+
+def random_position():
+    x = random.uniform(0.05, 0.3)
+    y = random.uniform(0.05, 0.3)
+    z = 0.0
+    return [x, y, z]
+
+
+def distance(a, b):
+    return math.sqrt(
+        (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
+    )
 
 class TargetManager(Node):
     def __init__(self):
@@ -17,7 +32,7 @@ class TargetManager(Node):
 
         self.marker_publisher = self.create_publisher(
             MarkerArray,
-            "/target_marker",
+            "/target_markers",
             10
         )
 
@@ -26,17 +41,20 @@ class TargetManager(Node):
             self.publish_timer_callback
         )
 
-        self.targets = [
-            [0.2, 0.1, 0.15], # red
-            [0.3, 0.2, 0.15], # green
-            [0.1, -0.1, 0.15] # blue 
-        ]
+        # Temporary random distance as a dummy data 
+        self.targets = []
+
+        while len(self.targets) < 3:
+            candidate = random_position()
+
+            if all(distance(candidate, p) > 0.08 for p in self.targets):
+                self.targets.append(candidate)
 
 
     def publish_timer_callback(self):
 
         msg = PoseArray()
-        msg.header.frame_id = "base_link"
+        msg.header.frame_id = "g_base"
 
         for target in self.targets:
 
@@ -66,7 +84,7 @@ class TargetManager(Node):
 
             marker = Marker()
 
-            marker.header.frame_id = "base_link"
+            marker.header.frame_id = "g_base"
             marker.id = i
             marker.type = Marker.SPHERE
             marker.action = Marker.ADD
@@ -86,6 +104,7 @@ class TargetManager(Node):
             marker.color.r = colors[i][0] 
             marker.color.g = colors[i][1] 
             marker.color.b = colors[i][2] 
+            marker.color.a = 1.0 
 
             marker_array.markers.append(marker)
 
