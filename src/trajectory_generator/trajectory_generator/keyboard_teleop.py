@@ -64,7 +64,6 @@ class KeyboardTeleop(Node):
 
     def get_key(self):
         # not my code, have no idea whats happening
-        
         settings = termios.tcgetattr(sys.stdin)
 
         try:
