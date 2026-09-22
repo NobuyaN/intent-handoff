@@ -23,24 +23,17 @@ def generate_launch_description():
         package_name="mycobot_280_moveit2"
     ).to_moveit_configs()
 
-    servo_yaml = load_yaml("moveit_servo", "config/servo.yaml")
-    servo_params = {"moveit_servo": servo_yaml}
-
-    rviz_config_file = (
-        get_package_share_directory("moveit_servo") + "/config/demo_rviz_config.rviz"
+    servo_yaml = load_yaml(
+        "trajectory_generator", 
+        "config/servo.yaml"
     )
 
-    rviz_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
-        output="log",
-        arguments=["d", rviz_config_file],
-        parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-        ],
-    )
+    if servo_yaml is None:
+        raise RuntimeError("Could not load config/servo.yaml")
+    
+    servo_params = {
+        "moveit_servo": servo_yaml
+    }
 
     servo_node = Node(
         package="moveit_servo",
@@ -56,7 +49,6 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            rviz_node,
             servo_node,
         ]
     )
