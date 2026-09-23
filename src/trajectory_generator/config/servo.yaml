@@ -6,6 +6,7 @@ cartesian_command_in_topic: /teleop_twist
 joint_command_in_topic: /servo_node/delta_joint_node 
 
 robot_link_command_frame: g_base
+planning_frame: g_base
 
 move_group_name: arm_group
 planning_group: g_base
