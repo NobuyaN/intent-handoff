@@ -4,6 +4,8 @@ from rclpy.time import Time
 
 from tf2_ros import Buffer, TransformListener
 
+from std_msgs.msg import String
+
 import csv
 from datetime import datetime
 from pathlib import Path
@@ -14,10 +16,18 @@ class TrajectoryLogger(Node):
         self.get_logger().info("Trajectory logger node started")
 
         self.tf_buffer = Buffer()
+        self.is_recording = False
 
         self.tf_listener = TransformListener(
             self.tf_buffer,
             self
+        )
+
+        self.trial_sub = self.create_subscription(
+            String,
+            "/trial_state",
+            self.state_callback,
+            10
         )
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -46,8 +56,6 @@ class TrajectoryLogger(Node):
             "y",
             "z"
         ])
-
-        self.start_time = self.get_clock().now()
         
         self.timer = self.create_timer(
             0.05,
@@ -55,7 +63,18 @@ class TrajectoryLogger(Node):
         )
 
 
+    def state_callback(self, msg):
+        if msg.data == "TELEOP" and not self.is_recording:
+            self.is_recording = True
+            self.start_time = self.get_clock().now()
+
+            self.get_logger().info("Recording started")
+
+
     def log_pose(self):
+        if not self.is_recording:
+            return
+        
         try:
             transform = self.tf_buffer.lookup_transform(
                 "g_base",
