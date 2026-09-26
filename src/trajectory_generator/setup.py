@@ -40,6 +40,7 @@ setup(
     entry_points={
         'console_scripts': [
             "keyboard_teleop = trajectory_generator.keyboard_teleop:main",
+            "trajectory_logger = trajectory_generator.trajectory_logger:main"
         ],
     },
 )
