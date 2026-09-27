@@ -8,7 +8,7 @@ from std_srvs.srv import Trigger
 class TrialManager(Node):
     def __init__(self):
         super().__init__("trial_manager")
-        self.get_logger().info("Trial manager node initialized")
+        self.get_logger().info("Trial manager initialized: IDLE")
 
         self.state = "IDLE"
         self.start_time = None
