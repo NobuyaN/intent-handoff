@@ -15,7 +15,7 @@ class TrialManager(Node):
         self.state = "IDLE"
         self.start_time = None
         self.trial_id = 0
-        self.target_label = None
+        self.target_label = ""
 
         self.target_labels = [
             "red",
@@ -48,6 +48,15 @@ class TrialManager(Node):
             10
         )
 
+    def publish_state(self):
+        msg = TrialState()
+        msg.state = self.state
+        msg.trial_id = self.trial_id
+        msg.target_label = self.target_label
+
+        self.state_pub.publish(msg)
+
+
     def twist_callback(self, msg):
         moving = (
             abs(msg.twist.linear.x) > 0.001 or 
@@ -58,10 +67,8 @@ class TrialManager(Node):
         if self.state == "ARMED" and moving:
             self.state = "TELEOP"
 
-            msg = TrialState()
-            msg.state = self.state
-            self.state_pub.publish(msg)
-
+            self.publish_state()
+            
             self.get_logger().info("State: TELEOP")
 
     def start_trial_callback(self, req, res):
@@ -72,30 +79,24 @@ class TrialManager(Node):
         res.success = True
         res.message = "Trial armed"
 
-        msg = TrialState()
-        msg.state = self.state
-        msg.trial_id = self.trial_id
-        msg.target_label = self.target_label
-        self.state_pub.publish(msg)
+        self.publish_state()
 
         self.get_logger().info(
-            f"Trial: {self.trial_id}"    
-            f"Target: {self.target_label}"    
+            f"Trial: {self.trial_id} | "    
+            f"Target: {self.target_label} | "    
             f"State: ARMED"
         )
 
         return res
 
 
-    def stop_trial_callback(self, res, req):
+    def stop_trial_callback(self, req, res):
         self.state = "COMPLETE"
 
         res.success = True
         res.message = "Trial completed"
 
-        msg = TrialState()
-        msg.state = self.state
-        self.state_pub.publish(msg)
+        self.publish_state()
 
         self.get_logger().info("State: COMPLETE")
 
