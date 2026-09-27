@@ -17,6 +17,8 @@ class TrajectoryLogger(Node):
 
         self.tf_buffer = Buffer()
         self.is_recording = False
+        self.file = None
+        self.writer = None
 
         self.tf_listener = TransformListener(
             self.tf_buffer,
@@ -29,9 +31,15 @@ class TrajectoryLogger(Node):
             self.state_callback,
             10
         )
+        
+        self.timer = self.create_timer(
+            0.05,
+            self.log_pose
+        )
 
+    def start_new_csv(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
+        
         data_dir = Path.home() / "intent_handoff_ws" / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
         filename = f"trajectory_{timestamp}.csv"
@@ -56,27 +64,28 @@ class TrajectoryLogger(Node):
             "y",
             "z"
         ])
-        
-        self.timer = self.create_timer(
-            0.05,
-            self.log_pose
-        )
 
 
     def state_callback(self, msg):
         if msg.data == "TELEOP" and not self.is_recording:
-            self.is_recording = True
+            self.start_new_csv()
             self.start_time = self.get_clock().now()
+            self.is_recording = True
 
             self.get_logger().info("Recording started")
         elif msg.data == "COMPLETE" and self.is_recording:
             self.is_recording = False
+
+            if self.file is not None:
+                self.file.close()
+                self.file = None
+                self.writer = None
+
             self.get_logger().info("Recording stopped")
             
 
-
     def log_pose(self):
-        if not self.is_recording:
+        if not self.is_recording or self.writer is None:
             return
         
         try:
@@ -121,7 +130,8 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        node.file.close()
+        if node.file is not None:
+            node.file.close()
         node.destroy_node()
         rclpy.shutdown()
 
