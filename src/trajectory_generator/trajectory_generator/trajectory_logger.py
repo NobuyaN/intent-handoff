@@ -69,6 +69,10 @@ class TrajectoryLogger(Node):
             self.start_time = self.get_clock().now()
 
             self.get_logger().info("Recording started")
+        elif msg.data == "COMPLETE" and self.is_recording:
+            self.is_recording = False
+            self.get_logger().info("Recording stopped")
+            
 
 
     def log_pose(self):
