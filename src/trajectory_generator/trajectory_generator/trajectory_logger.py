@@ -4,7 +4,7 @@ from rclpy.time import Time
 
 from tf2_ros import Buffer, TransformListener
 
-from std_msgs.msg import String
+from experiment_interfaces.msg import TrialState
 
 import csv
 from datetime import datetime
@@ -26,7 +26,7 @@ class TrajectoryLogger(Node):
         )
 
         self.trial_sub = self.create_subscription(
-            String,
+            TrialState,
             "/trial_state",
             self.state_callback,
             10
@@ -37,12 +37,12 @@ class TrajectoryLogger(Node):
             self.log_pose
         )
 
-    def start_new_csv(self):
+    def start_new_csv(self, trial_id, target_label):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         data_dir = Path.home() / "intent_handoff_ws" / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"trajectory_{timestamp}.csv"
+        filename = f"trial_{trial_id:03d}_{target_label}_{timestamp}.csv"
         file_dir = data_dir / filename
 
         self.get_logger().info(
@@ -68,7 +68,7 @@ class TrajectoryLogger(Node):
 
     def state_callback(self, msg):
         if msg.data == "TELEOP" and not self.is_recording:
-            self.start_new_csv()
+            self.start_new_csv(msg.trial_id, msg.target_label)
             self.start_time = self.get_clock().now()
             self.is_recording = True
 
