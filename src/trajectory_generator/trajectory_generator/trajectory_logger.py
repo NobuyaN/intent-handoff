@@ -67,13 +67,13 @@ class TrajectoryLogger(Node):
 
 
     def state_callback(self, msg):
-        if msg.data == "TELEOP" and not self.is_recording:
+        if msg.state == "TELEOP" and not self.is_recording:
             self.start_new_csv(msg.trial_id, msg.target_label)
             self.start_time = self.get_clock().now()
             self.is_recording = True
 
             self.get_logger().info("Recording started")
-        elif msg.data == "COMPLETE" and self.is_recording:
+        elif msg.state == "COMPLETE" and self.is_recording:
             self.is_recording = False
 
             if self.file is not None:
