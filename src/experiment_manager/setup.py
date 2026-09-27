@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            "trial_manager = experiment_manager.trial_manager:main"
         ],
     },
 )
