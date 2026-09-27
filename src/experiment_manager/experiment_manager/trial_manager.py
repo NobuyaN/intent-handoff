@@ -19,6 +19,12 @@ class TrialManager(Node):
             self.start_trial_callback
         )
 
+        self.stop_service = self.create_service(
+            Trigger,
+            "/stop_trial",
+            self.stop_trial_callback
+        )
+
         self.twist_sub = self.create_subscription(
             TwistStamped,
             "/teleop_twist",
@@ -59,6 +65,21 @@ class TrialManager(Node):
         self.state_pub.publish(msg)
 
         self.get_logger().info("State: ARMED")
+
+        return res
+
+
+    def stop_trial_callback(self, res, req):
+        self.state = "COMPLETE"
+
+        res.success = True
+        res.message = "Trial completed"
+
+        msg = String()
+        msg.data = self.state
+        self.state_pub.publish(msg)
+
+        self.get_logger().info("State: COMPLETE")
 
         return res
 
