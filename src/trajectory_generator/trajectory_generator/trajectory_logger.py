@@ -13,7 +13,7 @@ from pathlib import Path
 class TrajectoryLogger(Node):
     def __init__(self):
         super().__init__("trajectory_logger")
-        self.get_logger().info("Trajectory logger node started")
+        self.get_logger().info("Trajectory logger initialized")
 
         self.tf_buffer = Buffer()
         self.is_recording = False
