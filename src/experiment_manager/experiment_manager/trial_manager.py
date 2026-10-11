@@ -59,9 +59,9 @@ class TrialManager(Node):
 
     def twist_callback(self, msg):
         moving = (
-            abs(msg.twist.linear.x) > 0.001 or 
-            abs(msg.twist.linear.y) > 0.001 or 
-            abs(msg.twist.linear.z) > 0.001 
+            abs(msg.twist.linear.x) > 0.005 or 
+            abs(msg.twist.linear.y) > 0.005 or 
+            abs(msg.twist.linear.z) > 0.005 
         )
 
         if self.state == "ARMED" and moving:
