@@ -27,7 +27,7 @@ class JoystickTeleop(Node):
         twist.header.stamp = self.get_clock().now().to_msg()
         twist.header.frame_id = "g_base"
 
-        speed = 0.05
+        speed = 0.1
 
         twist.twist.linear.x = msg.axes[1] * speed 
         twist.twist.linear.y = msg.axes[0] * speed 
