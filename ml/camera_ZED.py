@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 CAMERA_INDEX = 4
 
@@ -13,12 +14,18 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2560)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
-width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-fps = cap.get(cv2.CAP_PROP_FPS)
-
-print(f"Resolution: {width}x{height}, FPS: {fps}")
-print("Press 'q' to quit.")
+colors = {
+    "Red": [
+        (np.array([0, 100, 100]), np.array([10, 255, 255])),
+        (np.array([170, 100, 100]), np.array([179, 255, 255]))
+    ],
+    "Green": [
+        (np.array([35, 100, 100]), np.array([85, 255, 255]))
+    ],
+    "Blue": [
+        (np.array([100, 100, 100]), np.array([140, 255, 255]))
+    ]
+}
 
 while True:
     ret, frame = cap.read()
@@ -31,6 +38,19 @@ while True:
     left_frame = frame[:, :w // 2]
 
     cv2.imshow("ZED-M Left", left_frame)
+
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    for name, (lower_bound, upper_bound) in colors.items():
+
+        mask = cv2.inRange(
+            hsv, 
+            lower_bound,
+            upper_bound
+        )
+
+
+
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
