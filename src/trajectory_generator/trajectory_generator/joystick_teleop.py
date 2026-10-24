@@ -7,6 +7,7 @@ from geometry_msgs.msg import TwistStamped
 class JoystickTeleop(Node):
     def __init__(self): 
         super().__init__("joystick_teleop")
+        self.declare_parameter("command_frame", "link_base")
         self.get_logger().info("Joystick teleop initialized")
 
         self.joystick_sub = self.create_subscription(
@@ -25,7 +26,7 @@ class JoystickTeleop(Node):
     def joy_callback(self, msg):
         twist = TwistStamped()
         twist.header.stamp = self.get_clock().now().to_msg()
-        twist.header.frame_id = "link_base"
+        twist.header.frame_id = self.get_parameter("command_frame").value
 
         speed = 0.1
 
