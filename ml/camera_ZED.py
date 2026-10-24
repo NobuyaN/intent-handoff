@@ -1,10 +1,12 @@
 import cv2
 import numpy as np
 
-# find CAMERA_INDEX using v4l2-ctl --list-devices in terminal
+# find CAMERA_INDEX: v4l2-ctl --list-devices
+# supported resolutions: v4l2-ctl -d /dev/video0 --list-formats-ext
 
 CAMERA_INDEX = 0
 MIN_BALL_AREA = 400
+ZOOM = 2.0
 
 def makeMask(hsv, lower, upper):
     return cv2.inRange(
@@ -38,6 +40,8 @@ colors = {
     ]
 }
 
+last_detections = {}
+
 while True:
     ret, frame = cap.read()
 
@@ -47,8 +51,6 @@ while True:
 
     h, w = frame.shape[:2]
     left_frame = frame[:, :w // 2]
-
-    ZOOM = 2.0
 
     h, w = left_frame.shape[:2]
 
@@ -77,6 +79,8 @@ while True:
             cv2.CHAIN_APPROX_SIMPLE
         )
 
+        detected = False
+
         if contours:
             contour = max(contours, key=cv2.contourArea)
 
@@ -85,24 +89,54 @@ while True:
             if contour_area > MIN_BALL_AREA:
                 M = cv2.moments(contour)
 
-                if M["m00"] == 0:
-                    continue
+                if M["m00"] != 0:
+                    cx = int(M["m10"] / M["m00"])
+                    cy = int(M["m01"] / M["m00"])
 
-                cx = int(M["m10"] / M["m00"])
-                cy = int(M["m01"] / M["m00"])
+                    original_x = x1 + cx * crop_w / w
+                    original_y = y1 + cy * crop_h / h
 
-                cv2.drawContours(zoomed_frame, [contour], -1, (0, 255, 255), 2)
-                cv2.circle(zoomed_frame, (cx, cy), 5, (255, 255, 255), -1)
+                    last_detections[name] = (
+                        contour.copy(),
+                        cx,
+                        cy,
+                        original_x,
+                        original_y,
+                        contour_area
+                    )
 
-                cv2.putText(
-                    zoomed_frame,
-                    f"{name}: ({cx}, {cy}, {contour_area})",
-                    (cx + 10, cy - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (255, 255, 255),
-                    2
-                )
+                    detected = True
+
+        if name in last_detections:
+            contour, cx, cy, original_x, original_y, contour_area = last_detections[name]
+
+            cv2.drawContours(
+                zoomed_frame, 
+                [contour], 
+                -1, 
+                (0, 255, 255), 
+                2
+            )
+
+            cv2.circle(
+                zoomed_frame, 
+                (cx, cy), 
+                5, 
+                (255, 255, 255), 
+                -1
+            )
+
+            status = "" if detected else " (last)"
+
+            cv2.putText(
+                zoomed_frame,
+                f"{name}: ({original_x:.1f}, {original_y:.1f}, {contour_area:.0f}){status}",
+                (cx + 10, cy - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (255, 255, 255),
+                2
+            )
 
     cv2.imshow("Ball Detection", zoomed_frame)
 
