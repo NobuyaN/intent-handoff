@@ -25,7 +25,7 @@ class JoystickTeleop(Node):
     def joy_callback(self, msg):
         twist = TwistStamped()
         twist.header.stamp = self.get_clock().now().to_msg()
-        twist.header.frame_id = "g_base"
+        twist.header.frame_id = "link_base"
 
         speed = 0.1
 
