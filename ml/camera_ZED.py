@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 
-CAMERA_INDEX = 4
+# find CAMERA_INDEX using v4l2-ctl --list-devices in terminal
+
+CAMERA_INDEX = 0
 
 def makeMask(hsv, lower, upper):
     return cv2.inRange(
@@ -47,26 +49,47 @@ while True:
 
     cv2.imshow("ZED-M Left", left_frame)
 
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
 
     for name, bound in colors.items():
 
-        if name == "Red":
-            mask1 = makeMask(
-                hsv, 
-                bound[0][0], 
-                bound[0][1]
-            )
+        mask = np.zeros(hsv.shape[:2], dtype=np.uint8)
 
-            mask2 = makeMask(
-                hsv, 
-                bound[1][0], 
-                bound[1][1]
-            )
+        for lower, upper in bound:
+            mask = cv2.bitwise_or(mask, cv2.inRange(hsv, lower, upper))
 
-            mask_red = cv2.bitwise_or(mask1, mask2)
+        contours, _ = cv2.findContours(
+            mask,
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE
+        )
 
-        
+        if contours:
+            contour = max(contours, key=cv2.contourArea)
+
+            if cv2.contourArea(contour) > 300:
+                M = cv2.moments(contour)
+
+                if M["m00"] == 0:
+                    continue
+
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+
+                cv2.drawContours(frame, [contour], -1, (0, 255, 255), 2)
+                cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1)
+
+                cv2.putText(
+                    frame,
+                    f"{name}: ({cx}, {cy})",
+                    (cx + 10, cy - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (255, 255, 255),
+                    2
+                )
+
+    cv2.imshow("Ball Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
