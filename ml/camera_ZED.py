@@ -4,6 +4,7 @@ import numpy as np
 # find CAMERA_INDEX using v4l2-ctl --list-devices in terminal
 
 CAMERA_INDEX = 0
+MIN_BALL_AREA = 400
 
 def makeMask(hsv, lower, upper):
     return cv2.inRange(
@@ -26,8 +27,8 @@ cap.set(cv2.CAP_PROP_FPS, 30)
 
 colors = {
     "Red": [
-        (np.array([0, 100, 100]), np.array([10, 255, 255])),
-        (np.array([170, 100, 100]), np.array([179, 255, 255]))
+        (np.array([0, 100, 100]), np.array([8, 255, 255])),
+        (np.array([172, 100, 100]), np.array([179, 255, 255]))
     ],
     "Green": [
         (np.array([35, 100, 100]), np.array([85, 255, 255]))
@@ -47,9 +48,21 @@ while True:
     h, w = frame.shape[:2]
     left_frame = frame[:, :w // 2]
 
-    cv2.imshow("ZED-M Left", left_frame)
+    ZOOM = 2.0
 
-    hsv = cv2.cvtColor(left_frame, cv2.COLOR_BGR2HSV)
+    h, w = left_frame.shape[:2]
+
+    crop_w = int(w / ZOOM)
+    crop_h = int(h / ZOOM)
+
+    x1 = (w - crop_w) // 2
+    y1 = (h - crop_h) // 2
+
+    cropped = left_frame[y1:y1 + crop_h, x1:x1 + crop_w]
+
+    zoomed_frame = cv2.resize(cropped, (w, h))
+
+    hsv = cv2.cvtColor(zoomed_frame, cv2.COLOR_BGR2HSV)
 
     for name, bound in colors.items():
 
@@ -67,7 +80,9 @@ while True:
         if contours:
             contour = max(contours, key=cv2.contourArea)
 
-            if cv2.contourArea(contour) > 300:
+            contour_area = cv2.contourArea(contour)
+
+            if contour_area > MIN_BALL_AREA:
                 M = cv2.moments(contour)
 
                 if M["m00"] == 0:
@@ -76,12 +91,12 @@ while True:
                 cx = int(M["m10"] / M["m00"])
                 cy = int(M["m01"] / M["m00"])
 
-                cv2.drawContours(frame, [contour], -1, (0, 255, 255), 2)
-                cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1)
+                cv2.drawContours(zoomed_frame, [contour], -1, (0, 255, 255), 2)
+                cv2.circle(zoomed_frame, (cx, cy), 5, (255, 255, 255), -1)
 
                 cv2.putText(
-                    frame,
-                    f"{name}: ({cx}, {cy})",
+                    zoomed_frame,
+                    f"{name}: ({cx}, {cy}, {contour_area})",
                     (cx + 10, cy - 10),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
@@ -89,7 +104,7 @@ while True:
                     2
                 )
 
-    cv2.imshow("Ball Detection", frame)
+    cv2.imshow("Ball Detection", zoomed_frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
