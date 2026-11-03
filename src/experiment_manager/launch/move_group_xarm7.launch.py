@@ -20,7 +20,6 @@ def launch_setup(context, *args, **kwargs):
     move_group = Node(
         package="moveit_ros_move_group",
         executable="move_group",
-        name="move_group",
         output="screen",
         parameters=[
             moveit_config.to_dict(),
