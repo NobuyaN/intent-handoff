@@ -23,7 +23,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
         parameters=[
             moveit_config.to_dict(),
-            {"allow_trajectory_execution": False},
+            {"allow_trajectory_execution": True},
         ],
     )
 
